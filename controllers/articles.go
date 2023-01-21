@@ -3,8 +3,8 @@ package controllers
 import (
 	"strconv"
 
-	"balaganur_agri_app/forms"
-	"balaganur_agri_app/models"
+	"BusHierGamePlan/forms"
+	"BusHierGamePlan/models"
 
 	"net/http"
 

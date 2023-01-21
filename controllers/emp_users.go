@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"balaganur_agri_app/forms"
-	"balaganur_agri_app/models"
+	"BusHierGamePlan/forms"
+	"BusHierGamePlan/models"
 
 	"net/http"
 

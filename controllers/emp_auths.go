@@ -6,8 +6,8 @@ import (
 	"os"
 	"strconv"
 
-	"balaganur_agri_app/forms"
-	"balaganur_agri_app/models"
+	"BusHierGamePlan/forms"
+	"BusHierGamePlan/models"
 	"github.com/gin-gonic/gin"
 	jwt "github.com/golang-jwt/jwt/v4"
 )

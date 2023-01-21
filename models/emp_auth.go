@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"balaganur_agri_app/db"
+	"BusHierGamePlan/db"
 	jwt "github.com/golang-jwt/jwt/v4"
 	uuid "github.com/twinj/uuid"
 )

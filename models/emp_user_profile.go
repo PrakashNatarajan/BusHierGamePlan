@@ -5,8 +5,8 @@ import (
     "log"
 	"time"
 	"strings"
-	"balaganur_agri_app/db"
-	"balaganur_agri_app/forms"
+	"BusHierGamePlan/db"
+	"BusHierGamePlan/forms"
 
 	"golang.org/x/crypto/bcrypt"
 )
