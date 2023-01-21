@@ -55,8 +55,8 @@ var empAuths = new(controllers.EmpAuthController)
 //JWT Authentication middleware attached to each request that needs to be authenitcated to validate the access_token in the header
 func EmpAuthMiddleware() gin.HandlerFunc {
   return func(ctxt *gin.Context) {
-  	empAuths.TokenValid(ctxt)
-  	ctxt.Next()
+    empAuths.TokenValid(ctxt)
+    ctxt.Next()
   }
 }
 
