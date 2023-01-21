@@ -27,12 +27,12 @@ type EmpProfileModel struct{}
 var empUserModel = new(EmpUserModel)
 
 //Login ...
-func (epMdl EmpProfileModel) Login(form forms.EmpProLoginForm) (empUser EmployeeProfile, fmrToken EmpUserToken, err error) {
+func (epMdl EmpProfileModel) Login(form forms.EmpProLoginForm) (empUser EmployeeProfile, empToken EmpUserToken, err error) {
 
 	err = db.GetDB().SelectOne(&empUser, "SELECT id, email, password, name, updated_at, created_at FROM former_user_profiles WHERE email=LOWER($1) LIMIT 1", form.Email)
 
 	if err != nil {
-		return empUser, fmrToken, err
+		return empUser, empToken, err
 	}
 
 	//Compare the password form and database if match
@@ -42,22 +42,22 @@ func (epMdl EmpProfileModel) Login(form forms.EmpProLoginForm) (empUser Employee
 	err = bcrypt.CompareHashAndPassword(byteHashedPassword, bytePassword)
 
 	if err != nil {
-		return empUser, fmrToken, err
+		return empUser, empToken, err
 	}
 
-	//Generate the JWT auth fmrToken
+	//Generate the JWT auth empToken
 	tokenDetails, err := empUserModel.CreateToken(empUser.ID)
 	if err != nil {
-		return empUser, fmrToken, err
+		return empUser, empToken, err
 	}
 
 	saveErr := empUserModel.CreateAuth(empUser.ID, tokenDetails)
 	if saveErr == nil {
-		fmrToken.AccessToken = tokenDetails.AccessToken
-		fmrToken.RefreshToken = tokenDetails.RefreshToken
+		empToken.AccessToken = tokenDetails.AccessToken
+		empToken.RefreshToken = tokenDetails.RefreshToken
 	}
 
-	return empUser, fmrToken, nil
+	return empUser, empToken, nil
 }
 
 //Register ...
