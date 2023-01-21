@@ -22,19 +22,19 @@ import (
 //CORS (Cross-Origin Resource Sharing)
 func CORSMiddleware() gin.HandlerFunc {
   return func(ctxt *gin.Context) {
-	ctxt.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost")
-	ctxt.Writer.Header().Set("Access-Control-Max-Age", "86400")
-	ctxt.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
-	ctxt.Writer.Header().Set("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Origin, Authorization, Accept, Client-Security-Token, Accept-Encoding, x-access-token")
-	ctxt.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length")
-	ctxt.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+    ctxt.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost")
+    ctxt.Writer.Header().Set("Access-Control-Max-Age", "86400")
+    ctxt.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
+    ctxt.Writer.Header().Set("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Origin, Authorization, Accept, Client-Security-Token, Accept-Encoding, x-access-token")
+    ctxt.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length")
+    ctxt.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 
-	if ctxt.Request.Method == "OPTIONS" {
-	  fmt.Println("OPTIONS")
-	  ctxt.AbortWithStatus(200)
-	} else {
-	  ctxt.Next()
-	}
+    if ctxt.Request.Method == "OPTIONS" {
+      fmt.Println("OPTIONS")
+      ctxt.AbortWithStatus(200)
+    } else {
+      ctxt.Next()
+    }
   }
 }
 
