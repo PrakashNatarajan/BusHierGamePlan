@@ -13,8 +13,8 @@ import (
 	uuid "github.com/twinj/uuid"
 )
 
-//EmpTokenDetails ...
-type EmpTokenDetails struct {
+//EmpUserTokenDetails ...
+type EmpUserTokenDetails struct {
 	AccessToken  string
 	RefreshToken string
 	AccessUUID   string
@@ -23,25 +23,25 @@ type EmpTokenDetails struct {
 	RtExpires    int64
 }
 
-//EmpAccessDetails ...
-type EmpAccessDetails struct {
+//EmpUserAccessDetails ...
+type EmpUserAccessDetails struct {
 	AccessUUID string
 	UserID     int64
 }
 
-//EmpToken ...
-type EmpToken struct {
+//EmpUserToken ...
+type EmpUserToken struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
-//EmpAuthModel ...
-type EmpAuthModel struct{}
+//EmpUserModel ...
+type EmpUserModel struct{}
 
 //CreateToken ...
-func (m EmpAuthModel) CreateToken(userID int64) (*EmpTokenDetails, error) {
+func (empUsr EmpUserModel) CreateToken(userID int64) (*EmpUserTokenDetails, error) {
 
-	td := &EmpTokenDetails{}
+	td := &EmpUserTokenDetails{}
 	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
 	td.AccessUUID = uuid.NewV4().String()
 
@@ -49,7 +49,7 @@ func (m EmpAuthModel) CreateToken(userID int64) (*EmpTokenDetails, error) {
 	td.RefreshUUID = uuid.NewV4().String()
 
 	var err error
-	//Creating Access EmpToken
+	//Creating Access EmpUserToken
 	atClaims := jwt.MapClaims{}
 	atClaims["authorized"] = true
 	atClaims["access_uuid"] = td.AccessUUID
@@ -61,7 +61,7 @@ func (m EmpAuthModel) CreateToken(userID int64) (*EmpTokenDetails, error) {
 	if err != nil {
 		return nil, err
 	}
-	//Creating Refresh EmpToken
+	//Creating Refresh EmpUserToken
 	rtClaims := jwt.MapClaims{}
 	rtClaims["refresh_uuid"] = td.RefreshUUID
 	rtClaims["user_id"] = userID
@@ -75,7 +75,7 @@ func (m EmpAuthModel) CreateToken(userID int64) (*EmpTokenDetails, error) {
 }
 
 //CreateAuth ...
-func (m EmpAuthModel) CreateAuth(userid int64, td *EmpTokenDetails) error {
+func (empUsr EmpUserModel) CreateAuth(userid int64, td *EmpUserTokenDetails) error {
 
 	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
 	rt := time.Unix(td.RtExpires, 0)
@@ -93,7 +93,7 @@ func (m EmpAuthModel) CreateAuth(userid int64, td *EmpTokenDetails) error {
 }
 
 //ExtractToken ...
-func (m EmpAuthModel) ExtractToken(r *http.Request) string {
+func (empUsr EmpUserModel) ExtractToken(r *http.Request) string {
 	bearToken := r.Header.Get("Authorization")
 	//normally Authorization the_token_xxx
 	strArr := strings.Split(bearToken, " ")
@@ -104,8 +104,8 @@ func (m EmpAuthModel) ExtractToken(r *http.Request) string {
 }
 
 //VerifyToken ...
-func (m EmpAuthModel) VerifyToken(r *http.Request) (*jwt.Token, error) {
-	tokenString := m.ExtractToken(r)
+func (empUsr EmpUserModel) VerifyToken(r *http.Request) (*jwt.Token, error) {
+	tokenString := empUsr.ExtractToken(r)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		//Make sure that the token method conform to "SigningMethodHMAC"
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -120,8 +120,8 @@ func (m EmpAuthModel) VerifyToken(r *http.Request) (*jwt.Token, error) {
 }
 
 //TokenValid ...
-func (m EmpAuthModel) TokenValid(r *http.Request) error {
-	token, err := m.VerifyToken(r)
+func (empUsr EmpUserModel) TokenValid(r *http.Request) error {
+	token, err := empUsr.VerifyToken(r)
 	if err != nil {
 		return err
 	}
@@ -132,8 +132,8 @@ func (m EmpAuthModel) TokenValid(r *http.Request) error {
 }
 
 //ExtractTokenMetadata ...
-func (m EmpAuthModel) ExtractTokenMetadata(r *http.Request) (*EmpAccessDetails, error) {
-	token, err := m.VerifyToken(r)
+func (empUsr EmpUserModel) ExtractTokenMetadata(r *http.Request) (*EmpUserAccessDetails, error) {
+	token, err := empUsr.VerifyToken(r)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (m EmpAuthModel) ExtractTokenMetadata(r *http.Request) (*EmpAccessDetails, 
 		if err != nil {
 			return nil, err
 		}
-		return &EmpAccessDetails{
+		return &EmpUserAccessDetails{
 			AccessUUID: accessUUID,
 			UserID:     userID,
 		}, nil
@@ -156,7 +156,7 @@ func (m EmpAuthModel) ExtractTokenMetadata(r *http.Request) (*EmpAccessDetails, 
 }
 
 //FetchAuth ...
-func (m EmpAuthModel) FetchAuth(authD *EmpAccessDetails) (int64, error) {
+func (empUsr EmpUserModel) FetchAuth(authD *EmpUserAccessDetails) (int64, error) {
 	userid, err := db.GetRedis().Get(authD.AccessUUID).Result()
 	if err != nil {
 		return 0, err
@@ -166,7 +166,7 @@ func (m EmpAuthModel) FetchAuth(authD *EmpAccessDetails) (int64, error) {
 }
 
 //DeleteAuth ...
-func (m EmpAuthModel) DeleteAuth(givenUUID string) (int64, error) {
+func (empUsr EmpUserModel) DeleteAuth(givenUUID string) (int64, error) {
 	deleted, err := db.GetRedis().Del(givenUUID).Result()
 	if err != nil {
 		return 0, err

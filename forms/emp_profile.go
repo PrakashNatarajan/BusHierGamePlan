@@ -6,24 +6,24 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-//EmpUserForm ...
-type EmpUserForm struct{}
+//EmpProfileForm ...
+type EmpProfileForm struct{}
 
-//EmpLoginForm ...
-type EmpLoginForm struct {
+//EmpProLoginForm ...
+type EmpProLoginForm struct {
 	Email    string `form:"email" json:"email" binding:"required,email"`
 	Password string `form:"password" json:"password" binding:"required,min=3,max=50"`
 }
 
-//EmpRegisterForm ...
-type EmpRegisterForm struct {
+//EmpProRegisterForm ...
+type EmpProRegisterForm struct {
 	Name     string `form:"name" json:"name" binding:"required,min=3,max=20,fullName"` //fullName rule is in validator.go
 	Email    string `form:"email" json:"email" binding:"required,email"`
 	Password string `form:"password" json:"password" binding:"required,min=3,max=50"`
 }
 
 //Name ...
-func (frm EmpUserForm) Name(tag string, errMsg ...string) (message string) {
+func (empPro EmpProfileForm) Name(tag string, errMsg ...string) (message string) {
 	switch tag {
 	case "required":
 		if len(errMsg) == 0 {
@@ -40,7 +40,7 @@ func (frm EmpUserForm) Name(tag string, errMsg ...string) (message string) {
 }
 
 //Email ...
-func (frm EmpUserForm) Email(tag string, errMsg ...string) (message string) {
+func (empPro EmpProfileForm) Email(tag string, errMsg ...string) (message string) {
 	switch tag {
 	case "required":
 		if len(errMsg) == 0 {
@@ -55,7 +55,7 @@ func (frm EmpUserForm) Email(tag string, errMsg ...string) (message string) {
 }
 
 //Password ...
-func (frm EmpUserForm) Password(tag string) (message string) {
+func (empPro EmpProfileForm) Password(tag string) (message string) {
 	switch tag {
 	case "required":
 		return "Please enter your password"
@@ -69,7 +69,7 @@ func (frm EmpUserForm) Password(tag string) (message string) {
 }
 
 //Signin ...
-func (frm EmpUserForm) Login(err error) string {
+func (empPro EmpProfileForm) Login(err error) string {
 	switch err.(type) {
 	case validator.ValidationErrors:
 
@@ -79,10 +79,10 @@ func (frm EmpUserForm) Login(err error) string {
 
 		for _, err := range err.(validator.ValidationErrors) {
 			if err.Field() == "Email" {
-				return frm.Email(err.Tag())
+				return empPro.Email(err.Tag())
 			}
 			if err.Field() == "Password" {
-				return frm.Password(err.Tag())
+				return empPro.Password(err.Tag())
 			}
 		}
 
@@ -94,7 +94,7 @@ func (frm EmpUserForm) Login(err error) string {
 }
 
 //Register ...
-func (frm EmpUserForm) Register(err error) string {
+func (empPro EmpProfileForm) Register(err error) string {
 	switch err.(type) {
 	case validator.ValidationErrors:
 
@@ -104,15 +104,15 @@ func (frm EmpUserForm) Register(err error) string {
 
 		for _, err := range err.(validator.ValidationErrors) {
 			if err.Field() == "Name" {
-				return frm.Name(err.Tag())
+				return empPro.Name(err.Tag())
 			}
 
 			if err.Field() == "Email" {
-				return frm.Email(err.Tag())
+				return empPro.Email(err.Tag())
 			}
 
 			if err.Field() == "Password" {
-				return frm.Password(err.Tag())
+				return empPro.Password(err.Tag())
 			}
 
 		}

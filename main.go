@@ -92,7 +92,7 @@ func main() {
   v1 := route.Group("/v1")
   {
     /*** START EMP USER ***/
-	empUsers := new(controllers.EmpUsersController)
+	empUsers := new(controllers.EmpProsController)
 
 	v1.POST("/user/login", empUsers.Login)
 	v1.POST("/user/register", empUsers.Register)

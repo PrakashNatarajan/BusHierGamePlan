@@ -5,8 +5,8 @@ type AdminToken struct {
 	RefreshToken string `form:"refresh_token" json:"refresh_token" binding:"required"`
 }
 
-//EmpToken ...
-type EmpToken struct {
+//EmpProToken ...
+type EmpProToken struct {
 	RefreshToken string `form:"refresh_token" json:"refresh_token" binding:"required"`
 }
 

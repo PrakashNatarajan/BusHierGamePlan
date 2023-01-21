@@ -1,78 +1,109 @@
 package controllers
 
 import (
+	"fmt"
+	"net/http"
+	"os"
+	"strconv"
+
 	"BusHierGamePlan/forms"
 	"BusHierGamePlan/models"
-
-	"net/http"
-
 	"github.com/gin-gonic/gin"
+	jwt "github.com/golang-jwt/jwt/v4"
 )
 
-//EmpUsersController ...
-type EmpUsersController struct{}
+//EmpAuthController ...
+type EmpAuthController struct{}
 
-var empUsrModel = new(models.EmpUserModel)
-var empUsrForm = new(forms.EmpUserForm)
+var fmrAuthModel = new(models.EmpUserModel)
 
-//getUserID ...
-func getUserID(c *gin.Context) (userID int64) {
-	//MustGet returns the value for the given key if it exists, otherwise it panics.
-	return c.MustGet("userID").(int64)
+//TokenValid ...
+func (ctl EmpAuthController) TokenValid(c *gin.Context) {
+
+	tokenAuth, err := fmrAuthModel.ExtractTokenMetadata(c.Request)
+	if err != nil {
+		//Token either expired or not valid
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Please login first"})
+		return
+	}
+
+	userID, err := fmrAuthModel.FetchAuth(tokenAuth)
+	if err != nil {
+		//Token does not exists in Redis (User logged out or expired)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Please login first"})
+		return
+	}
+
+	//To be called from GetUserID()
+	c.Set("userID", userID)
 }
 
-//Login ...
-func (ctrl EmpUsersController) Login(c *gin.Context) {
-	var fmrLoginForm forms.FormerLoginForm
+//Refresh ...
+func (ctl EmpAuthController) Refresh(c *gin.Context) {
+	var tokenForm forms.EmpProToken
 
-	if validationErr := c.ShouldBindJSON(&fmrLoginForm); validationErr != nil {
-		message := empUsrForm.Login(validationErr)
-		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": message})
+	if c.ShouldBindJSON(&tokenForm) != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"message": "Invalid form", "form": tokenForm})
+		c.Abort()
 		return
 	}
 
-	user, token, err := empUsrModel.Login(fmrLoginForm)
+	//verify the token
+	token, err := jwt.Parse(tokenForm.RefreshToken, func(token *jwt.Token) (interface{}, error) {
+		//Make sure that the token method conform to "SigningMethodHMAC"
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("REFRESH_SECRET")), nil
+	})
+	//if there is an error, the token must have expired
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": "Invalid login details"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid authorization, please login again"})
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged in", "user": user, "token": token})
-}
-
-//Register ...
-func (ctrl EmpUsersController) Register(c *gin.Context) {
-	var fmrRegisterForm forms.FormerRegisterForm
-
-	if validationErr := c.ShouldBindJSON(&fmrRegisterForm); validationErr != nil {
-		message := empUsrForm.Register(validationErr)
-		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": message})
+	//is token valid?
+	if _, ok := token.Claims.(jwt.Claims); !ok && !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid authorization, please login again"})
 		return
 	}
+	//Since token is valid, get the uuid:
+	claims, ok := token.Claims.(jwt.MapClaims) //the token claims should conform to MapClaims
+	if ok && token.Valid {
+		refreshUUID, ok := claims["refresh_uuid"].(string) //convert the interface to string
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid authorization, please login again"})
+			return
+		}
+		userID, err := strconv.ParseInt(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid authorization, please login again"})
+			return
+		}
+		//Delete the previous Refresh Token
+		deleted, delErr := fmrAuthModel.DeleteAuth(refreshUUID)
+		if delErr != nil || deleted == 0 { //if any goes wrong
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid authorization, please login again"})
+			return
+		}
 
-	user, err := empUsrModel.Register(fmrRegisterForm)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"message": err.Error()})
-		return
+		//Create new pairs of refresh and access tokens
+		ts, createErr := fmrAuthModel.CreateToken(userID)
+		if createErr != nil {
+			c.JSON(http.StatusForbidden, gin.H{"message": "Invalid authorization, please login again"})
+			return
+		}
+		//save the tokens metadata to redis
+		saveErr := fmrAuthModel.CreateAuth(userID, ts)
+		if saveErr != nil {
+			c.JSON(http.StatusForbidden, gin.H{"message": "Invalid authorization, please login again"})
+			return
+		}
+		tokens := map[string]string{
+			"access_token":  ts.AccessToken,
+			"refresh_token": ts.RefreshToken,
+		}
+		c.JSON(http.StatusOK, tokens)
+	} else {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid authorization, please login again"})
 	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully registered", "user": user})
-}
-
-//Logout ...
-func (ctrl EmpUsersController) Logout(c *gin.Context) {
-
-	au, err := fmrAuthModel.ExtractTokenMetadata(c.Request)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "User not logged in"})
-		return
-	}
-
-	deleted, delErr := fmrAuthModel.DeleteAuth(au.AccessUUID)
-	if delErr != nil || deleted == 0 { //if any goes wrong
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Invalid request"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }

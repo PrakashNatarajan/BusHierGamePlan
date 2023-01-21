@@ -11,8 +11,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//EmpUser ...
-type EmpUser struct {
+//EmployeeProfile ...
+type EmployeeProfile struct {
 	ID        int64  `db:"id, primarykey, autoincrement" json:"id"`
 	Email     string `db:"email" json:"email"`
 	Password  string `db:"password" json:"-"`
@@ -21,13 +21,13 @@ type EmpUser struct {
 	UpdatedAt *time.Time `db:"updated_at" json:"created_at"`
 }
 
-//EmpUserModel ...
-type EmpUserModel struct{}
+//EmpProfileModel ...
+type EmpProfileModel struct{}
 
-var fmrAuthModel = new(FormerAuthModel)
+var empUserModel = new(EmpUserModel)
 
 //Login ...
-func (m EmpUserModel) Login(form forms.FormerLoginForm) (empUser EmpUser, fmrToken FormerToken, err error) {
+func (epMdl EmpProfileModel) Login(form forms.EmpProLoginForm) (empUser EmployeeProfile, fmrToken EmpUserToken, err error) {
 
 	err = db.GetDB().SelectOne(&empUser, "SELECT id, email, password, name, updated_at, created_at FROM former_user_profiles WHERE email=LOWER($1) LIMIT 1", form.Email)
 
@@ -46,12 +46,12 @@ func (m EmpUserModel) Login(form forms.FormerLoginForm) (empUser EmpUser, fmrTok
 	}
 
 	//Generate the JWT auth fmrToken
-	tokenDetails, err := fmrAuthModel.CreateToken(empUser.ID)
+	tokenDetails, err := empUserModel.CreateToken(empUser.ID)
 	if err != nil {
 		return empUser, fmrToken, err
 	}
 
-	saveErr := fmrAuthModel.CreateAuth(empUser.ID, tokenDetails)
+	saveErr := empUserModel.CreateAuth(empUser.ID, tokenDetails)
 	if saveErr == nil {
 		fmrToken.AccessToken = tokenDetails.AccessToken
 		fmrToken.RefreshToken = tokenDetails.RefreshToken
@@ -61,7 +61,7 @@ func (m EmpUserModel) Login(form forms.FormerLoginForm) (empUser EmpUser, fmrTok
 }
 
 //Register ...
-func (m EmpUserModel) Register(form forms.FormerRegisterForm) (empUser EmpUser, err error) {
+func (epMdl EmpProfileModel) Register(form forms.EmpProRegisterForm) (empUser EmployeeProfile, err error) {
 	getDb := db.GetDB()
 
 	//Check if the empUser exists in database
@@ -94,7 +94,7 @@ func (m EmpUserModel) Register(form forms.FormerRegisterForm) (empUser EmpUser, 
 }
 
 //One ...
-func (m EmpUserModel) One(userID int64) (empUser EmpUser, err error) {
+func (epMdl EmpProfileModel) One(userID int64) (empUser EmployeeProfile, err error) {
 	err = db.GetDB().SelectOne(&empUser, "SELECT id, email, name FROM former_user_profiles WHERE id=$1 LIMIT 1", userID)
 	return empUser, err
 }
