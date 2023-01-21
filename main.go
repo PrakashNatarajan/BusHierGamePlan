@@ -42,9 +42,9 @@ func CORSMiddleware() gin.HandlerFunc {
 //Generate a unique ID and attach it to each request for future reference or use
 func RequestIDMiddleware() gin.HandlerFunc {
   return func(ctxt *gin.Context) {
-  	uuid := uuid.NewV4()
-  	ctxt.Writer.Header().Set("X-Request-Id", uuid.String())
-  	ctxt.Next()
+    uuid := uuid.NewV4()
+    ctxt.Writer.Header().Set("X-Request-Id", uuid.String())
+    ctxt.Next()
   }
 }
 
