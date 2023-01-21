@@ -21,8 +21,9 @@ var db *gorp.DbMap
 //Init ...
 func Init() {
 
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s host=%s sslmode=require", os.Getenv("DB_USER"), os.Getenv("DB_PASS"), os.Getenv("DB_NAME"), os.Getenv("DB_HOST"))
+    dbinfo := os.Getenv("DB_USER") + ":" + os.Getenv("DB_PASS") + "@tcp(" + os.Getenv("DB_HOST") + ":" + os.Getenv("DB_PORT") + ")/" + os.Getenv("DB_NAME")
 
+    fmt.Println(dbinfo)
 	var err error
 	db, err = ConnectDB(dbinfo)
 	if err != nil {
@@ -42,7 +43,7 @@ func ConnectDB(dataSourceName string) (*gorp.DbMap, error) {
 		return nil, err
 	}
 
-	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MysqlDialect{}}
+	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
 	//dbmap.TraceOn("[gorp]", log.New(os.Stdout, "golang-gin:", log.Lmicroseconds)) //Trace database requests
 	return dbmap, nil
 }
