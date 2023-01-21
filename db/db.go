@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	_redis "github.com/go-redis/redis/v7"
-	_ "github.com/lib/pq" //import postgres
+	_ "github.com/go-sql-driver/mysql" //import mysql
 )
 
 //DB ...
@@ -33,7 +33,7 @@ func Init() {
 
 //ConnectDB ...
 func ConnectDB(dataSourceName string) (*gorp.DbMap, error) {
-	db, err := sql.Open("postgres", dataSourceName)
+	db, err := sql.Open("mysql", dataSourceName)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func ConnectDB(dataSourceName string) (*gorp.DbMap, error) {
 		return nil, err
 	}
 
-	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
+	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MysqlDialect{}}
 	//dbmap.TraceOn("[gorp]", log.New(os.Stdout, "golang-gin:", log.Lmicroseconds)) //Trace database requests
 	return dbmap, nil
 }
