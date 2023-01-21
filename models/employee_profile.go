@@ -29,7 +29,7 @@ var empUserModel = new(EmpUserModel)
 //Login ...
 func (epMdl EmpProfileModel) Login(form forms.EmpProLoginForm) (empUser EmployeeProfile, empToken EmpUserToken, err error) {
 
-	err = db.GetDB().SelectOne(&empUser, "SELECT id, email, password, name, updated_at, created_at FROM former_user_profiles WHERE email=LOWER($1) LIMIT 1", form.Email)
+	err = db.GetDB().SelectOne(&empUser, "SELECT id, email, password, name, updated_at, created_at FROM employee_profiles WHERE email=LOWER($1) LIMIT 1", form.Email)
 
 	if err != nil {
 		return empUser, empToken, err
@@ -65,7 +65,7 @@ func (epMdl EmpProfileModel) Register(form forms.EmpProRegisterForm) (empUser Em
 	getDb := db.GetDB()
 
 	//Check if the empUser exists in database
-	checkUser, err := getDb.SelectInt("SELECT count(id) FROM former_user_profiles WHERE email=LOWER($1) LIMIT 1", form.Email)
+	checkUser, err := getDb.SelectInt("SELECT count(id) FROM employee_profiles WHERE email=LOWER($1) LIMIT 1", form.Email)
 	if err != nil {
 		return empUser, errors.New("something went wrong, please try again later")
 	}
@@ -81,7 +81,7 @@ func (epMdl EmpProfileModel) Register(form forms.EmpProRegisterForm) (empUser Em
 	}
 
 	//Create the empUser and return back the empUser ID
-	err = getDb.QueryRow("INSERT INTO former_user_profiles(email, password, name) VALUES($1, $2, $3) RETURNING id", strings.ToLower(form.Email), string(hashedPassword), form.Name).Scan(&empUser.ID)
+	err = getDb.QueryRow("INSERT INTO employee_profiles(email, password, name) VALUES($1, $2, $3) RETURNING id", strings.ToLower(form.Email), string(hashedPassword), form.Name).Scan(&empUser.ID)
 	if err != nil {
 	    log.Println(err)
 		return empUser, errors.New("something went wrong, please try again later")
@@ -95,6 +95,6 @@ func (epMdl EmpProfileModel) Register(form forms.EmpProRegisterForm) (empUser Em
 
 //One ...
 func (epMdl EmpProfileModel) One(userID int64) (empUser EmployeeProfile, err error) {
-	err = db.GetDB().SelectOne(&empUser, "SELECT id, email, name FROM former_user_profiles WHERE id=$1 LIMIT 1", userID)
+	err = db.GetDB().SelectOne(&empUser, "SELECT id, email, name FROM employee_profiles WHERE id=$1 LIMIT 1", userID)
 	return empUser, err
 }
